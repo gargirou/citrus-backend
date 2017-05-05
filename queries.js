@@ -27,7 +27,7 @@ function getAllUsers(req, res, next) {
 
 function getSingleUser(req, res, next) {
   var userID = parseInt(req.params.id);
-  db.one('select * from myusers where id = $1', pupID)
+  db.one('select * from myusers where id = $1', userID)
     .then(function (data) {
       res.status(200)
         .json({
