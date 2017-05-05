@@ -3,6 +3,9 @@ var router = express.Router();
 
 var db = require('../queries');
 
+router.get('/', function(req, res, next) {
+  res.send('Citrus Root Page');
+});
 router.get('/api/users', db.getAllUsers);
 router.get('/api/users/:id', db.getSingleUser);
 router.post('/api/users', db.createUser);
