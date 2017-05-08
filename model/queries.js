@@ -90,6 +90,7 @@ function removeUser(req, res, next) {
     });
 }
 
+
 module.exports = {
   getAllUsers: getAllUsers,
   getSingleUser: getSingleUser,

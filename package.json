@@ -1,5 +1,5 @@
 {
-  "name": "node-postgres-promises",
+  "name": "citrus-backend",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -8,13 +8,16 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "body-parser": "~1.17.1",
+    "cheerio": "^0.22.0",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.3",
     "debug": "~2.6.3",
     "express": "~4.15.2",
     "jade": "~1.11.0",
+    "jquery": "^3.2.1",
     "morgan": "~1.8.1",
     "pg-promise": "^5.6.7",
+    "request": "^2.81.0",
     "serve-favicon": "~2.4.2"
   }
 }
