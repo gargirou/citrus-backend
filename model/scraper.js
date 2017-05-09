@@ -1,5 +1,6 @@
 var request = require('request');
 var cheerio = require('cheerio');
+var strHelper = require('../util/string-helper');
 
 var foodSiteURL = 'https://food52.com';
 var searchPartOfURL = 'search?q=';
@@ -17,7 +18,7 @@ function extractIngredientsFromURL(foodSource, allIngredients) {
     foodSource.ingredients += ingsArr[i] + '+';
   }
 }
-
+//([^A-Za-z0-9 \:\/\(\)\[\]])
 //Get links to recipes
 function scrapeRecipes(req, res) {
   //Food Scraping Object
@@ -80,9 +81,9 @@ function getRecipes(res, food) {
         var $ = cheerio.load(html);
         recipes[index] = {
           url         : recipeURL,
-          title       : $(recipeSelectors.title).text().trim(),
+          title       : strHelper.superTrim($(recipeSelectors.title).text()),
           image       : $(recipeSelectors.image).attr('src'),
-          serving     : $(recipeSelectors.serving).text().trim(),
+          serving     : strHelper.superTrim($(recipeSelectors.serving).text()),
           ingredients : []
         };
         $(recipeSelectors.ingredients).each(function(i, elem) {
