@@ -1,13 +1,13 @@
-var request = require('request');
-var cheerio = require('cheerio');
+var request   = require('request');
+var cheerio   = require('cheerio');
 var strHelper = require('../util/string-helper');
+var foodVars  = require('./food52');
+var db        = require('./queries');
 
-var foodSiteURL = 'https://food52.com';
-var searchPartOfURL = 'search?q=';
 
 //Reset foodSource object parameters
 function resetObject(foodSource) {
-  foodSource.ingredients = searchPartOfURL;
+  foodSource.ingredients = foodVars.searchPartOfURL;
   foodSource.links = [];
 }
 
@@ -18,20 +18,11 @@ function extractIngredientsFromURL(foodSource, allIngredients) {
     foodSource.ingredients += ingsArr[i] + '+';
   }
 }
-//([^A-Za-z0-9 \:\/\(\)\[\]])
+
 //Get links to recipes
-function scrapeRecipes(req, res) {
+function scrapeRecipeLinks(req, res) {
   //Food Scraping Object
-  var foodSource = {
-    baseURL       : foodSiteURL + '/recipes/',
-    ingredients   : searchPartOfURL,
-    linksSelector : '.recipe-results-tiles > .collectable-tile > .photo-block a',
-    links         : [],
-    url           : function() {
-                      return this.baseURL + this.ingredients;
-                    },
-    delim         : ','
-  };
+  foodSource = foodVars.foodSource;
   resetObject(foodSource);
   extractIngredientsFromURL(foodSource, req.params.ings);
 
@@ -57,43 +48,43 @@ function scrapeRecipes(req, res) {
 
 function getRecipes(res, food) {
   //Todo: Check if URLS are in the db already. If yes: return them, if not save recipes and return.
-  var recipeSelectors = {
-    title       : 'div.main-content.recipe-main > article > header > h1',
-    image       : '#recipe-gallery-frame > figure > img', //get attr(src)
-    serving     : '#global-page-frame > div.page-body-block > div > div.body-with-sidebar > div.main-content.recipe-main > article > p:nth-child(15) > strong',
-    ingredients : 'div.main-content.recipe-main > article > section.clearfix > ul > li',
-    ingText : ' .recipe-list-item-name',
-    ingQuantity : '.recipe-list-quantity'
-  };
-  var recipe = {
-    url         : '',
-    title       : '',
-    image       : '',
-    serving     : '',
-    ingredients : []
-  };
+  recipeSelectors = foodVars.recipeSelectors;
+  recipes = foodVars.recipes;
   var recipes = [];
   //Loop through each food url
   food.links.forEach(function (item, index, array) {
-    var recipeURL = foodSiteURL + food.links[index];
+    var recipeURL = foodVars.foodSiteURL + food.links[index];
     request(recipeURL, function(error, response, html) {
       if(!error) {
-        var $ = cheerio.load(html);
-        recipes[index] = {
-          url         : recipeURL,
-          title       : strHelper.superTrim($(recipeSelectors.title).text()),
-          image       : $(recipeSelectors.image).attr('src'),
-          serving     : strHelper.superTrim($(recipeSelectors.serving).text()),
-          ingredients : []
-        };
-        $(recipeSelectors.ingredients).each(function(i, elem) {
-          recipes[index].ingredients[i] = {
-            quantity : $(this).children(recipeSelectors.ingQuantity).text().trim(),
-            text     : $(this).children(recipeSelectors.ingText).text().trim()
-          };
+        //Check if recipeURL is in db, if so recipes[index] = returned object, else load html.
+        var result = "";
+        db.getRecipe(recipeURL, function(returned) {
+          result = returned;
+          console.log(result);
         });
+        if(result != "") {
+          recipes[index] = result;
+        } else {
+          var $ = cheerio.load(html);
+          recipes[index] = {
+            url         : recipeURL,
+            title       : strHelper.superTrim($(recipeSelectors.title).text()),
+            image       : $(recipeSelectors.image).attr('src'),
+            serving     : strHelper.superTrim($(recipeSelectors.serving).text()),
+            ingredients : []
+          };
+          $(recipeSelectors.ingredients).each(function(i, elem) {
+            recipes[index].ingredients[i] = {
+              quantity : $(this).children(recipeSelectors.ingQuantity).text().trim(),
+              name     : $(this).children(recipeSelectors.ingText).text().trim()
+            };
+          });
+          //Insert recipe into db
+          db.createRecipe(recipes[index]);
+        }
         res.write(JSON.stringify(recipes[index]));
         res.write('\n');
+
         } else {
           console.log(error);
         }
@@ -104,7 +95,7 @@ function getRecipes(res, food) {
 //Load food page and retrieve recipe links
 function getPage(req, res, next) {
   //Begins scraping of recipes
-  scrapeRecipes(req, res);
+  scrapeRecipeLinks(req, res);
   //Timeout terminates hanging requests
   setTimeout(function() {
     res.end();
