@@ -36,7 +36,7 @@ function scrapeRecipeLinks(req, res) {
           console.log($(this).attr('href'));
       });
 
-      console.log("End");
+      console.log("End Links");
       //res.send(JSON.stringify(foodSource));
     } else {
       console.log(error);
@@ -47,22 +47,22 @@ function scrapeRecipeLinks(req, res) {
 }
 
 function getRecipes(res, food) {
-  //Todo: Check if URLS are in the db already. If yes: return them, if not save recipes and return.
   recipeSelectors = foodVars.recipeSelectors;
   recipes = foodVars.recipes;
   var recipes = [];
   //Loop through each food url
   food.links.forEach(function (item, index, array) {
     var recipeURL = foodVars.foodSiteURL + food.links[index];
+    //Check if recipeURL is in db, if so recipes[index] = returned object, else load html.
+    var result = db.getRecipe(recipeURL, function(returned) {
+      console.log(`scraper.js: ${returned}`);
+      result = returned;
+    });
+
     request(recipeURL, function(error, response, html) {
       if(!error) {
-        //Check if recipeURL is in db, if so recipes[index] = returned object, else load html.
-        var result = "";
-        db.getRecipe(recipeURL, function(returned) {
-          result = returned;
-          console.log(result);
-        });
-        if(result != "") {
+        if(result != 'empty') {
+          console.log(`not empty: ${result}`);
           recipes[index] = result;
         } else {
           var $ = cheerio.load(html);
@@ -80,7 +80,9 @@ function getRecipes(res, food) {
             };
           });
           //Insert recipe into db
-          db.createRecipe(recipes[index]);
+          db.createRecipe(recipes[index], function(returned) {
+            console.log(`Returned Recipe: ${returned}`);
+          });
         }
         res.write(JSON.stringify(recipes[index]));
         res.write('\n');

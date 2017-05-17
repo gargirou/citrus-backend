@@ -29,10 +29,16 @@ var recipe = {
   ingredients : []
 };
 
+var ingredient = {
+  quantity : '',
+  name     : ''
+};
+
 module.exports = {
   foodSiteURL: foodSiteURL,
   searchPartOfURL: searchPartOfURL,
   foodSource: foodSource,
   recipeSelectors: recipeSelectors,
-  recipe: recipe
+  recipe: recipe,
+  ingredient: ingredient
 };
