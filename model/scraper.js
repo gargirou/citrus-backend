@@ -50,6 +50,7 @@ function getRecipes(res, food) {
   recipeSelectors = foodVars.recipeSelectors;
   recipes = foodVars.recipes;
   var recipes = [];
+  var c = 0;
   //Loop through each food url
   food.links.forEach(function (item, index, array) {
     var recipeURL = foodVars.foodSiteURL + food.links[index];
@@ -64,6 +65,8 @@ function getRecipes(res, food) {
         if(result != 'empty') {
           console.log(`not empty: ${result}`);
           recipes[index] = result;
+          res.write(JSON.stringify(recipes[index]));
+          res.write('\n');
         } else {
           var $ = cheerio.load(html);
           recipes[index] = {
@@ -80,16 +83,22 @@ function getRecipes(res, food) {
             };
           });
           //Insert recipe into db
+
           db.createRecipe(recipes[index], function(returned) {
-            console.log(`Returned Recipe: ${returned}`);
+            if(returned == 'Success') {
+            console.log(`Returned Recipe: ${++c}`);
+            res.write(JSON.stringify(recipes[index]));
+            res.write('\n');
+          }
+
           });
         }
-        res.write(JSON.stringify(recipes[index]));
-        res.write('\n');
+
 
         } else {
           console.log(error);
         }
+
     });
   });
 }
@@ -97,11 +106,13 @@ function getRecipes(res, food) {
 //Load food page and retrieve recipe links
 function getPage(req, res, next) {
   //Begins scraping of recipes
-  scrapeRecipeLinks(req, res);
+  scrapeRecipeLinks(req, res, function() {
+    res.end();
+  });
   //Timeout terminates hanging requests
   setTimeout(function() {
     res.end();
-  }, 25000);
+  }, 35000);
 }
 
 module.exports = {

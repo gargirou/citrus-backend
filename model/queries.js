@@ -34,37 +34,30 @@ function getRecipe(recipeURL, result) {
 function createRecipe(recipe, result) {
   console.log('Creating recipe');
   var promises = [];
-  db.none(insertRecipe, [recipe.url, recipe.title, recipe.image, recipe.serving])
+  return db.none(insertRecipe, [recipe.url, recipe.title, recipe.image, recipe.serving])
     .then(()=> {
+      result('Success');
       console.log('Recipe inserted');
-      //for(let i=0; i < recipe.ingredients.length; i++) {
-      var c = 0;
       return promise.map(recipe.ingredients, function(ingredient) {
-        console.log(`In loop: ${++c}`);
-        return insertIng(recipe, ingredient, function(result) {
-          var abc = result;
-          if(result) {
-
-            promises.push(result);
+        return insertIng(recipe, ingredient, function(ing_result) {
+          console.log('Ing Here');
+          if(ing_result) {
+            promises.push(ing_result);
           }
           return promises;
         });
-        c--;
-        }).reduce(function(promises) {
+
+      }).reduce(function(promises) {
+
           return promises;
         });
 
-        // promises.push(insertIng(recipe, recipe.ingredients[i], function(returned) {
-        //   console.log('Ingredient inserted');
-        // }));
-
-      // }
-      // return result(promises);
     })
     .catch((err)=> {
       console.log(err);
       return result('failed');
     });
+
 }
 
 function insertIng(recipe, ingredient, result) {
